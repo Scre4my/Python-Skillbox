@@ -1,83 +1,35 @@
-import nltk
-from nltk.stem import SnowballStemmer
-from nltk import pos_tag
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords, wordnet
-from nltk.stem.wordnet import WordNetLemmatizer
+import requests
+import json
+response = requests.get("https://swapi.dev/api/starships/?search=Millennium%20Falcon")
+data = response.json()
 
-nltk.download('punkt')
-nltk.download('stopwords')
-nltk.download('averaged_perceptron_tagger')
-nltk.download('wordnet')
+# Получение информации о пилотах Millennium Falcon
+pilots_info = []
+for pilot_url in data['results'][0]['pilots']:
+    pilot_response = requests.get(pilot_url)
+    pilot_data = pilot_response.json()
+    homeworld_response = requests.get(pilot_data['homeworld'])
+    homeworld_data = homeworld_response.json()
+    pilot_info = {
+        'name': pilot_data['name'],
+        'height': pilot_data['height'],
+        'weight': pilot_data['mass'],
+        'homeworld': pilot_data['homeworld'],
+        'homeworld_info': homeworld_data
+    }
+    pilots_info.append(pilot_info)
 
-stop_words = set(stopwords.words('english'))
-tokenizer = nltk.RegexpTokenizer(r"\w+")
-stemmer = SnowballStemmer("english")
+# Создание информации о Millennium Falcon
+millennium_falcon_info = {
+    'name': data['results'][0]['name'],
+    'max_speed': data['results'][0]['max_atmosphering_speed'],
+    'class': data['results'][0]['starship_class'],
+    'pilots': pilots_info
+}
 
+# Вывод информации о Millennium Falcon в консоль
+print(json.dumps(millennium_falcon_info, indent=2))
 
-# Стемминг
-def stem_texts(texts):
-    preprocessed = []
-    for i in texts:
-        tokenized_words = tokenizer.tokenize(i) # токенизизуем каждый отзыв
-        temp=[]
-        for j in tokenized_words:
-            if not j in stop_words:
-                stemmed_word = stemmer.stem(j) # проходим стемером по каждому токену
-                temp.append(stemmed_word)
-        preprocessed.append(temp) # записываем в общий список токены после стеминга
-    return preprocessed
-
-def lem_texts(list_of_texts, return_tokens=True):
-    processed = []
-    for doc in tqdm(list_of_texts):
-        lower = doc.lower().replace('\n', ' ')
-
-        extra_chars = [',', '.', ':', ';', '(', ')', '[', ']', '/', ';', '!' '- ', '& ', '�', '‘', '’', '“', '”', '´',
-                   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                       '*', '±', '%', '>', '<', '\n', '|', '^', '=', ' – ', '_',
-                       '\xa0', '\\', '↓', '↑', '•', ' l ', '@', '  ', '  ', '\u2009', '×']
-
-        for char in extra_chars:
-            lower = lower.replace(char, ' ')
-
-        lower = lower.replace('  ', ' ')
-        lower = lower.replace('  ', ' ')
-        lower = lower.replace('  ', ' ')
-        lower = lower.replace('  ', ' ')
-
-
-        processed.append(lower)
-
-    # tokinezation and lemmatization
-    clean_tokens = []
-    for text in tqdm(processed):
-        words = word_tokenize(text)
-        words = pos_tag(words)
-        len(words)
-
-        def get_wordnet_pos(tag):
-            if tag == 'J':
-                return wordnet.ADJ
-            elif tag == 'V':
-                return wordnet.VERB
-            elif tag == 'R':
-                return wordnet.ADV
-            else:
-                return wordnet.NOUN
-
-        lemmatizer = WordNetLemmatizer()
-        lemmatized_words = [lemmatizer.lemmatize(word, get_wordnet_pos(tag[0])) for word, tag in words]
-        clean = [word for word in lemmatized_words if word not in stop_words and len(word)>=1]
-        clean_tokens.append(clean)
-
-    if return_tokens == True:
-        return clean_tokens
-    else:
-        return [' '.join(i) for i in clean_tokens]
-
-
-
-#preprocessed = stem_texts(df.reviewText)
-preprocessed = lem_texts(df.reviewText)
-print(len(preprocessed))
+# Запись информации о Millennium Falcon в JSON-файл
+with open('millennium_falcon_info.json', 'w') as file:
+    json.dump(millennium_falcon_info, file, indent=2)
