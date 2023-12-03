@@ -2,8 +2,6 @@ import requests
 import json
 response = requests.get("https://swapi.dev/api/starships/?search=Millennium%20Falcon")
 data = response.json()
-
-# Получение информации о пилотах Millennium Falcon
 pilots_info = []
 for pilot_url in data['results'][0]['pilots']:
     pilot_response = requests.get(pilot_url)
@@ -19,17 +17,12 @@ for pilot_url in data['results'][0]['pilots']:
     }
     pilots_info.append(pilot_info)
 
-# Создание информации о Millennium Falcon
 millennium_falcon_info = {
     'name': data['results'][0]['name'],
     'max_speed': data['results'][0]['max_atmosphering_speed'],
     'class': data['results'][0]['starship_class'],
     'pilots': pilots_info
 }
-
-# Вывод информации о Millennium Falcon в консоль
 print(json.dumps(millennium_falcon_info, indent=2))
-
-# Запись информации о Millennium Falcon в JSON-файл
 with open('millennium_falcon_info.json', 'w') as file:
     json.dump(millennium_falcon_info, file, indent=2)
