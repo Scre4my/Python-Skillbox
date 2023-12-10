@@ -1,30 +1,24 @@
 import sqlite3
 
+old_conn = sqlite3.connect('netflix.sqlite')
+old_cursor = old_conn.cursor()
 
-conn_original = sqlite3.connect('netflix.sqlite')
-cursor_original = conn_original.cursor()
+new_conn = sqlite3.connect('task1.sqlite')
+new_cursor = new_conn.cursor()
 
-conn_task1 = sqlite3.connect('task1.sqlite')
-cursor_task1 = conn_task1.cursor()
+new_cursor.execute('CREATE TABLE IF NOT EXISTS актеры (id INTEGER PRIMARY KEY, имя TEXT)')
+new_cursor.execute('CREATE TABLE IF NOT EXISTS фильмы (id INTEGER PRIMARY KEY, название TEXT)')
+new_cursor.execute('CREATE TABLE IF NOT EXISTS актер_фильм (id INTEGER PRIMARY KEY, id_актера INTEGER, id_фильма INTEGER)')
 
+old_cursor.execute('SELECT "cast" FROM netflix_titles')
+cast = old_cursor.fetchall()
+new_cursor.executemany('INSERT INTO актеры ( имя ) VALUES (?)', cast)
 
-cursor_task1.execute('''CREATE TABLE actors (
-                        actor_id INTEGER PRIMARY KEY,
-                        actor_name TEXT)''')
-
-cursor_task1.execute('''CREATE TABLE movies (
-                        movie_id INTEGER PRIMARY KEY,
-                        movie_name TEXT)''')
-
-cursor_task1.execute('''CREATE TABLE actor_movie (
-                        actor_id INTEGER,
-                        movie_id INTEGER,
-                        FOREIGN KEY (actor_id) REFERENCES actors(actor_id),
-                        FOREIGN KEY (movie_id) REFERENCES movies(movie_id))''')
+old_cursor.execute('SELECT "title" FROM netflix_titles')
+title = old_cursor.fetchall()
+new_cursor.executemany('INSERT INTO фильмы (название) VALUES (?)', title)
 
 
-cursor_original.execute('INSERT INTO actors SELECT DISTINCT cast FROM netflix')
-cursor_original.execute('INSERT INTO movies SELECT DISTINCT title FROM netflix')
 
-conn_original.close()
-conn_task1.close()
+old_conn.close()
+new_conn.close()
